@@ -1,4 +1,10 @@
--- credit me if you use my code or i will fucking murder you
+--[[
+  Author: curved flame – credit required if reused. (i will fucking murder you if im not creditted)
+  Changes from original:
+    • Buttons now live in a scrollable ScrollingFrame so UI isn’t cramped.
+    • Added blue "Copy Discord Invite" button.
+]]
+
 local AdminPanel = Instance.new("ScreenGui")
 AdminPanel.Name = "ImperiumHub"
 AdminPanel.ResetOnSpawn = false
@@ -25,19 +31,31 @@ Title.TextSize = 18
 Title.Font = Enum.Font.SourceSansBold
 Title.Parent = MainFrame
 
-local ButtonsContainer = Instance.new("Frame")
+-- Scrollable container
+local ButtonsContainer = Instance.new("ScrollingFrame")
 ButtonsContainer.Name = "ButtonsContainer"
 ButtonsContainer.Size = UDim2.new(1, -20, 1, -40)
 ButtonsContainer.Position = UDim2.new(0, 10, 0, 35)
 ButtonsContainer.BackgroundTransparency = 1
+ButtonsContainer.BorderSizePixel = 0
+ButtonsContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+ButtonsContainer.ScrollBarThickness = 6
 ButtonsContainer.Parent = MainFrame
 
-local function CreateButton(name, position, callback)
+local listLayout = Instance.new("UIListLayout")
+listLayout.Padding = UDim.new(0, 5)
+listLayout.Parent = ButtonsContainer
+listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+listLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    ButtonsContainer.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y)
+end)
+
+local function CreateButton(name, callback, color)
     local Button = Instance.new("TextButton")
     Button.Name = name
     Button.Size = UDim2.new(1, 0, 0, 40)
-    Button.Position = position
-    Button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    Button.BackgroundColor3 = color or Color3.fromRGB(60, 60, 60)
     Button.BorderSizePixel = 0
     Button.Text = name
     Button.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -46,10 +64,10 @@ local function CreateButton(name, position, callback)
     Button.Parent = ButtonsContainer
 
     Button.MouseEnter:Connect(function()
-        Button.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+        Button.BackgroundColor3 = (color or Color3.fromRGB(60, 60, 60)):Lerp(Color3.fromRGB(100, 100, 100), 0.25)
     end)
     Button.MouseLeave:Connect(function()
-        Button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        Button.BackgroundColor3 = color or Color3.fromRGB(60, 60, 60)
     end)
 
     Button.MouseButton1Click:Connect(callback)
@@ -57,30 +75,32 @@ local function CreateButton(name, position, callback)
 end
 
 local function notify(text)
-    game.StarterGui:SetCore("SendNotification", {
-        Title = "Imperium Hub",
-        Text = text,
-        Duration = 3,
-    })
+    pcall(function()
+        game.StarterGui:SetCore("SendNotification", {Title = "Imperium Hub", Text = text, Duration = 3})
+    end)
 end
 
-CreateButton("Infinite Sprint", UDim2.new(0, 0, 0, 0), function()
-    local player = game:GetService("Players").LocalPlayer
-    if player.Character and player.Character:FindFirstChild("Stamina") and player.Character:FindFirstChild("MaxStamina") then
-        player.Character.Stamina.Value = 9e999
-        player.Character.MaxStamina.Value = 9e999
+-- === ORIGINAL FEATURE BUTTONS === --
+
+-- Infinite Sprint
+CreateButton("Infinite Sprint", function()
+    local p = game:GetService("Players").LocalPlayer
+    if p.Character and p.Character:FindFirstChild("Stamina") and p.Character:FindFirstChild("MaxStamina") then
+        p.Character.Stamina.Value = 9e999
+        p.Character.MaxStamina.Value = 9e999
         notify("Infinite Sprint Activated")
     else
         notify("Error: Character or Stamina not found")
     end
 end)
 
-CreateButton("TP to Safe Zone", UDim2.new(0, 0, 0, 50), function()
-    local player = game:GetService("Players").LocalPlayer
-    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+-- TP to Safe Zone
+CreateButton("TP to Safe Zone", function()
+    local p = game:GetService("Players").LocalPlayer
+    if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
         local safeZone = game:GetService("Workspace"):FindFirstChild("BagSecuredArea")
         if safeZone and safeZone:FindFirstChild("FloorPart") then
-            player.Character.HumanoidRootPart.CFrame = safeZone.FloorPart.CFrame + Vector3.new(0, 3, 0)
+            p.Character.HumanoidRootPart.CFrame = safeZone.FloorPart.CFrame + Vector3.new(0,3,0)
             notify("Teleported to Safe Zone")
         else
             notify("Error: Safe Zone not found")
@@ -90,193 +110,151 @@ CreateButton("TP to Safe Zone", UDim2.new(0, 0, 0, 50), function()
     end
 end)
 
-CreateButton("Infinite Ammo", UDim2.new(0, 0, 0, 100), function()
-    local player = game:GetService("Players").LocalPlayer
-    if not player:FindFirstChild("InfiniteAmmoRunning") then
-        local flag = Instance.new("BoolValue")
-        flag.Name = "InfiniteAmmoRunning"
-        flag.Value = false
-        flag.Parent = player
+-- Infinite Ammo
+CreateButton("Infinite Ammo", function()
+    local p = game:GetService("Players").LocalPlayer
+    if not p:FindFirstChild("InfiniteAmmoRunning") then
+        local f = Instance.new("BoolValue", p)
+        f.Name = "InfiniteAmmoRunning"
     end
-    if player.InfiniteAmmoRunning.Value then
-        player.InfiniteAmmoRunning.Value = false
-        notify("Infinite Ammo Deactivated")
-    else
-        player.InfiniteAmmoRunning.Value = true
+    p.InfiniteAmmoRunning.Value = not p.InfiniteAmmoRunning.Value
+    if p.InfiniteAmmoRunning.Value then
         spawn(function()
-            while player.InfiniteAmmoRunning.Value do
-                if player.Character then
-                    if player.Character:FindFirstChild("PrimaryAmmo") then
-                        player.Character.PrimaryAmmo.Value = 9e9
-                    end
-                    if player.Character:FindFirstChild("SecondaryAmmo") then
-                        player.Character.SecondaryAmmo.Value = 9e9
-                    end
+            while p.InfiniteAmmoRunning.Value do
+                if p.Character then
+                    if p.Character:FindFirstChild("PrimaryAmmo") then p.Character.PrimaryAmmo.Value = 9e9 end
+                    if p.Character:FindFirstChild("SecondaryAmmo") then p.Character.SecondaryAmmo.Value = 9e9 end
                 end
-                wait(0.1)
+                task.wait(.1)
             end
         end)
         notify("Infinite Ammo Activated")
+    else
+        notify("Infinite Ammo Deactivated")
     end
 end)
 
-CreateButton("God Mode", UDim2.new(0, 0, 0, 150), function()
-    local player = game:GetService("Players").LocalPlayer
-    if not player:FindFirstChild("GodModeRunning") then
-        local flag = Instance.new("BoolValue")
-        flag.Name = "GodModeRunning"
-        flag.Value = false
-        flag.Parent = player
-    end
-    if player.GodModeRunning.Value then
-        player.GodModeRunning.Value = false
-        notify("God Mode Deactivated")
-    else
-        player.GodModeRunning.Value = true
+-- God Mode
+CreateButton("God Mode", function()
+    local p = game:GetService("Players").LocalPlayer
+    if not p:FindFirstChild("GodModeRunning") then Instance.new("BoolValue", p).Name = "GodModeRunning" end
+    p.GodModeRunning.Value = not p.GodModeRunning.Value
+    if p.GodModeRunning.Value then
         spawn(function()
-            while player.GodModeRunning.Value do
-                local playerName = player.Name
-                if game.workspace:FindFirstChild("Criminals") then
-                    local criminalFolder = game.workspace.Criminals
-                    for _, child in pairs(criminalFolder:GetChildren()) do
-                        if child.Name == playerName or child.Name:find(playerName) then
-                            if child:FindFirstChild("Armor") then
-                                child.Armor.Value = 9999
-                            end
-                            break
+            while p.GodModeRunning.Value do
+                local name = p.Name
+                local crims = workspace:FindFirstChild("Criminals")
+                if crims then
+                    for _,c in ipairs(crims:GetChildren()) do
+                        if c.Name == name or c.Name:find(name) then
+                            if c:FindFirstChild("Armor") then c.Armor.Value = 9999 end
                         end
                     end
                 end
-                if player.Character and player.Character:FindFirstChild("Armor") then
-                    player.Character.Armor.Value = 9999
-                end
-                wait(0.1)
+                if p.Character and p.Character:FindFirstChild("Armor") then p.Character.Armor.Value = 9999 end
+                task.wait(.1)
             end
         end)
         notify("God Mode Activated")
+    else
+        notify("God Mode Deactivated")
     end
 end)
 
-CreateButton("Speed Hack", UDim2.new(0, 0, 0, 200), function()
-    local player = game:GetService("Players").LocalPlayer
-    if not player:FindFirstChild("SpeedHackRunning") then
-        local flag = Instance.new("BoolValue")
-        flag.Name = "SpeedHackRunning"
-        flag.Value = false
-        flag.Parent = player
-    end
-    if player.SpeedHackRunning.Value then
-        player.SpeedHackRunning.Value = false
-        notify("Speed Hack Deactivated")
-    else
-        player.SpeedHackRunning.Value = true
+-- Speed Hack
+CreateButton("Speed Hack", function()
+    local p = game:GetService("Players").LocalPlayer
+    if not p:FindFirstChild("SpeedHackRunning") then Instance.new("BoolValue", p).Name = "SpeedHackRunning" end
+    p.SpeedHackRunning.Value = not p.SpeedHackRunning.Value
+    if p.SpeedHackRunning.Value then
         spawn(function()
-            local speedFactor = 2
-            while player.SpeedHackRunning.Value do
-                local character = player.Character
-                if character and character:FindFirstChild("HumanoidRootPart") and character:FindFirstChild("Humanoid") then
-                    local humanoid = character.Humanoid
-                    local rootPart = character.HumanoidRootPart
-                    if humanoid.MoveDirection.Magnitude > 0 then
-                        rootPart.CFrame = rootPart.CFrame + (humanoid.MoveDirection * speedFactor)
-                    end
+            local factor = 2
+            while p.SpeedHackRunning.Value do
+                local c = p.Character
+                if c and c:FindFirstChild("HumanoidRootPart") and c:FindFirstChild("Humanoid") then
+                    local h,root = c.Humanoid,c.HumanoidRootPart
+                    if h.MoveDirection.Magnitude>0 then root.CFrame = root.CFrame + h.MoveDirection*factor end
                 end
-                wait()
+                task.wait()
             end
         end)
         notify("Speed Hack Activated")
+    else
+        notify("Speed Hack Deactivated")
     end
 end)
 
-CreateButton("NoClip", UDim2.new(0, 0, 0, 250), function()
-    local player = game:GetService("Players").LocalPlayer
-    if not player:FindFirstChild("NoClipRunning") then
-        local flag = Instance.new("BoolValue")
-        flag.Name = "NoClipRunning"
-        flag.Value = false
-        flag.Parent = player
-    end
-    if player.NoClipRunning.Value then
-        player.NoClipRunning.Value = false
-        notify("NoClip Deactivated")
-    else
-        player.NoClipRunning.Value = true
+-- NoClip
+CreateButton("NoClip", function()
+    local p = game:GetService("Players").LocalPlayer
+    if not p:FindFirstChild("NoClipRunning") then Instance.new("BoolValue", p).Name = "NoClipRunning" end
+    p.NoClipRunning.Value = not p.NoClipRunning.Value
+    if p.NoClipRunning.Value then
         spawn(function()
-            local function setNoclip()
-                if player.Character then
-                    for _, part in pairs(player.Character:GetDescendants()) do
-                        if part:IsA("BasePart") then
-                            part.CanCollide = false
-                        end
+            local rs = game:GetService("RunService").Stepped
+            local function noclip()
+                if p.Character then
+                    for _,part in ipairs(p.Character:GetDescendants()) do
+                        if part:IsA("BasePart") then part.CanCollide=false end
                     end
                 end
             end
-            local connection = game:GetService("RunService").Stepped:Connect(setNoclip)
-            while player.NoClipRunning.Value do
-                wait()
-            end
-            connection:Disconnect()
-            if player.Character then
-                for _, part in pairs(player.Character:GetDescendants()) do
-                    if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-                        part.CanCollide = true
-                    end
+            local conn = rs:Connect(noclip)
+            while p.NoClipRunning.Value do task.wait() end
+            conn:Disconnect()
+            if p.Character then
+                for _,part in ipairs(p.Character:GetDescendants()) do
+                    if part:IsA("BasePart") and part.Name~="HumanoidRootPart" then part.CanCollide=true end
                 end
             end
         end)
         notify("NoClip Activated")
+    else
+        notify("NoClip Deactivated")
     end
 end)
 
-CreateButton("Infinite Jump", UDim2.new(0, 0, 0, 300), function()
-    local player = game:GetService("Players").LocalPlayer
-    if not player:FindFirstChild("InfiniteJumpRunning") then
-        local flag = Instance.new("BoolValue")
-        flag.Name = "InfiniteJumpRunning"
-        flag.Value = false
-        flag.Parent = player
-    end
-    if player.InfiniteJumpRunning.Value then
-        player.InfiniteJumpRunning.Value = false
-        if player:FindFirstChild("JumpConnection") then
-            player.JumpConnection:Disconnect()
-            player.JumpConnection:Destroy()
-        end
-        notify("Infinite Jump Deactivated")
-    else
-        player.InfiniteJumpRunning.Value = true
+-- Infinite Jump
+CreateButton("Infinite Jump", function()
+    local p = game:GetService("Players").LocalPlayer
+    if not p:FindFirstChild("InfiniteJumpRunning") then Instance.new("BoolValue", p).Name = "InfiniteJumpRunning" end
+    p.InfiniteJumpRunning.Value = not p.InfiniteJumpRunning.Value
+    if p.InfiniteJumpRunning.Value then
         local UIS = game:GetService("UserInputService")
         local connection
         connection = UIS.JumpRequest:Connect(function()
-            if player.InfiniteJumpRunning.Value and player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
-                player.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            if p.InfiniteJumpRunning.Value and p.Character and p.Character:FindFirstChildOfClass("Humanoid") then
+                p.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
             else
-                if connection then
-                    connection:Disconnect()
-                    connection = nil
-                end
+                if connection then connection:Disconnect() end
             end
         end)
-        local connValue = Instance.new("ObjectValue")
-        connValue.Name = "JumpConnection"
-        connValue.Value = connection
-        connValue.Parent = player
+        local v = Instance.new("ObjectValue", p)
+        v.Name = "JumpConnection"; v.Value = connection
         notify("Infinite Jump Activated")
+    else
+        if p:FindFirstChild("JumpConnection") and p.JumpConnection.Value then p.JumpConnection.Value:Disconnect() end
+        notify("Infinite Jump Deactivated")
     end
 end)
 
+-- === EXTRA BUTTONS === --
+
+local inviteLink = "https://discord.gg/DcTmm573m6" -- change to your real link
+CreateButton("Copy Discord Invite", function()
+    setclipboard(inviteLink)
+    notify("Invite link copied to clipboard!")
+end, Color3.fromRGB(0,110,255))
+
+-- Close X button
 local CloseButton = Instance.new("TextButton")
-CloseButton.Name = "CloseButton"
-CloseButton.Size = UDim2.new(0, 20, 0, 20)
-CloseButton.Position = UDim2.new(1, -25, 0, 5)
-CloseButton.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
+CloseButton.Size = UDim2.new(0,20,0,20)
+CloseButton.Position = UDim2.new(1,-25,0,5)
+CloseButton.BackgroundColor3 = Color3.fromRGB(255,80,80)
 CloseButton.BorderSizePixel = 0
 CloseButton.Text = "X"
-CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.TextColor3 = Color3.fromRGB(255,255,255)
 CloseButton.TextSize = 18
 CloseButton.Font = Enum.Font.SourceSansBold
 CloseButton.Parent = MainFrame
-
-CloseButton.MouseButton1Click:Connect(function()
-    AdminPanel.Enabled = false
-end)
+CloseButton.MouseButton1Click:Connect(function() AdminPanel.Enabled=false end)
