@@ -1,25 +1,84 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
 local SCRIPT_MAP = {
     [21532277] = "https://raw.githubusercontent.com/curvedflame/imperium-hub/main/notoriety",
     [7006496598] = "https://raw.githubusercontent.com/curvedflame/imperium-hub/main/bleeding%20blades",
 }
 
-local _cache = {}
-local url = SCRIPT_MAP[game.PlaceId]
+local NOTORIETY_ID = 21532277
 
-if url then
-    local source
-    if _cache[url] then
-        source = _cache[url]
-    else
-        source = game:HttpGet(url, true)
-        _cache[url] = source
-    end
+local function promptIsNotoriety()
+    local Gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+    Gui.ResetOnSpawn = false
+
+    local Frame = Instance.new("Frame", Gui)
+    Frame.Size = UDim2.new(0, 300, 0, 150)
+    Frame.Position = UDim2.new(0.5, -150, 0.5, -75)
+    Frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+
+    local Text = Instance.new("TextLabel", Frame)
+    Text.Size = UDim2.new(1, -20, 0.6, -10)
+    Text.Position = UDim2.new(0, 10, 0, 10)
+    Text.Text = "This game is not recognized. Is this Notoriety?"
+    Text.TextColor3 = Color3.new(1,1,1)
+    Text.BackgroundTransparency = 1
+    Text.TextWrapped = true
+    Text.Font = Enum.Font.SourceSansBold
+    Text.TextSize = 20
+
+    local yesBtn = Instance.new("TextButton", Frame)
+    yesBtn.Size = UDim2.new(0.4, 0, 0.3, 0)
+    yesBtn.Position = UDim2.new(0.05, 0, 0.65, 0)
+    yesBtn.Text = "Yes"
+    yesBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+    yesBtn.TextColor3 = Color3.new(1,1,1)
+    yesBtn.Font = Enum.Font.SourceSansBold
+    yesBtn.TextSize = 18
+
+    local noBtn = Instance.new("TextButton", Frame)
+    noBtn.Size = UDim2.new(0.4, 0, 0.3, 0)
+    noBtn.Position = UDim2.new(0.55, 0, 0.65, 0)
+    noBtn.Text = "No"
+    noBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    noBtn.TextColor3 = Color3.new(1,1,1)
+    noBtn.Font = Enum.Font.SourceSansBold
+    noBtn.TextSize = 18
+
+    local response = Instance.new("BindableEvent")
+
+    yesBtn.MouseButton1Click:Connect(function()
+        response:Fire(true)
+        Gui:Destroy()
+    end)
+    noBtn.MouseButton1Click:Connect(function()
+        response:Fire(false)
+        Gui:Destroy()
+    end)
+
+    return response.Event:Wait()
+end
+
+local function loadScript(url)
+    local source = game:HttpGet(url, true)
     local func = loadstring(source)
     if func then
         func()
     else
         warn("[Imperium Hub] loadstring failed for URL:", url)
     end
+end
+
+local placeId = game.PlaceId
+local url = SCRIPT_MAP[placeId]
+
+if url then
+    loadScript(url)
 else
-    warn("[Imperium Hub] This place (" .. game.PlaceId .. ") isn't whitelisted.")
+    local answer = promptIsNotoriety()
+    if answer then
+        loadScript(SCRIPT_MAP[NOTORIETY_ID])
+    else
+        warn("[Imperium Hub] This place ("..placeId..") isn't whitelisted.")
+    end
 end
