@@ -1,0 +1,87 @@
+--[[  Imperium Hub – universal loader
+      put this at the very top of the place / executor
+--]]
+
+local Loader = {}
+
+---------------------------------------------------------------------
+-- ░░ CONFIG ░░ -----------------------------------------------------
+---------------------------------------------------------------------
+Loader.SCRIPT_MAP = {
+    -- PlaceId          Raw Git URL to module
+    [21532277]   = "https://raw.githubusercontent.com/curvedflame/imperium-hub/main/notoriety",
+    [7006496598] = "https://raw.githubusercontent.com/curvedflame/imperium-hub/refs/heads/main/bleeding%20blades",
+    -- add more ids → urls here
+}
+
+-- If true, the fetched source is kept in memory so subsequent
+-- teleports to the *same* server don’t re‑download it.
+Loader.ENABLE_CACHE = true
+---------------------------------------------------------------------
+
+local HttpService = game:GetService("HttpService")
+local RunService  = game:GetService("RunService")
+
+-- internal one‑shot cache
+local _cache = {}
+
+-- pretty tag for warnings / prints
+local function tag(msg)
+    return ("[Imperium Hub] %s"):format(msg)
+end
+
+---------------------------------------------------------------------
+-- main entry
+---------------------------------------------------------------------
+function Loader:Run()
+    -- don’t run twice in the same session
+    if rawget(self, "_started") then return end
+    self._started = true
+
+    local placeId = game.PlaceId
+    local url     = self.SCRIPT_MAP[placeId]
+
+    if not url then
+        warn(tag(("This place (%s) is not whitelisted."):format(placeId)))
+        return
+    end
+
+    -- try to fetch (or reuse cached) source code
+    local ok, source = pcall(function()
+        if self.ENABLE_CACHE and _cache[url] then
+            return _cache[url]
+        end
+        local code = game:HttpGet(url, true)
+        if self.ENABLE_CACHE then
+            _cache[url] = code
+        end
+        return code
+    end)
+
+    if not ok then
+        warn(tag(("Failed to download script for place %s:\n%s"):format(placeId, source)))
+        return
+    end
+
+    -- try to run it in protected mode
+    local runOk, runErr = pcall(function()
+        assert(type(source) == "string" and #source > 0, "Empty script body")
+        loadstring(source)()
+    end)
+
+    if not runOk then
+        warn(tag(("Runtime error while executing %s:\n%s"):format(url, runErr)))
+    end
+end
+
+---------------------------------------------------------------------
+-- kick it off
+---------------------------------------------------------------------
+-- If you want the hub to load right away:
+Loader:Run()
+
+-- Or, if you prefer to wait until the game is fully loaded:
+-- game.Loaded:Wait()
+-- Loader:Run()
+
+return Loader
