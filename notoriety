@@ -1,3 +1,4 @@
+-- credit me if you use my code or i will fucking murder you
 local AdminPanel = Instance.new("ScreenGui")
 AdminPanel.Name = "ImperiumHub"
 AdminPanel.ResetOnSpawn = false
