@@ -2,7 +2,6 @@
   Author: curved flame – credit required if reused. (i will fucking murder you if im not creditted)
   Changes from original:
     • Buttons now live in a scrollable ScrollingFrame so UI isn’t cramped.
-    • Added blue "Copy Discord Invite" button.
 ]]
 
 local AdminPanel = Instance.new("ScreenGui")
