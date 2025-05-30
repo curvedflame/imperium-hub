@@ -1,6 +1,10 @@
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 
+if game.PlaceId == 126884695634066 then
+    print("grow a garden loaded")
+end
+
 local SCRIPT_MAP = {
     [21532277] = "https://raw.githubusercontent.com/curvedflame/imperium-hub/main/notoriety",
     [7006496598] = "https://raw.githubusercontent.com/curvedflame/imperium-hub/main/bleeding%20blades",
