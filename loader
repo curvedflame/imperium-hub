@@ -4,6 +4,7 @@ local player = Players.LocalPlayer
 local SCRIPT_MAP = {
     [21532277] = "https://raw.githubusercontent.com/curvedflame/imperium-hub/main/notoriety",
     [7006496598] = "https://raw.githubusercontent.com/curvedflame/imperium-hub/main/bleeding%20blades",
+    [126884695634066] = "https://raw.githubusercontent.com/curvedflame/imperium-hub/refs/heads/main/grow%20a%20garden",
     [155615604] = "https://raw.githubusercontent.com/curvedflame/imperium-hub/refs/heads/main/prison%20life"
 }
 
