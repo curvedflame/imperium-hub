@@ -3,7 +3,7 @@ local Players, ReplicatedStorage, RunService, UserInputService, TweenService = S
 local LocalPlayer, Combat, Voice = Players.LocalPlayer, ReplicatedStorage:WaitForChild("Combat"), ReplicatedStorage:WaitForChild("Environment"):WaitForChild("Voice")
 
 local Config = {
-    toggles = {}, settings = {updateInterval = 0.80, voiceInterval = 0.1, voiceLine = "Line3", killAllOffset = Vector3.new(0, 2, 0)},
+    toggles = {}, settings = {updateInterval = 0.70, voiceInterval = 0.1, voiceLine = "Line3", killAllOffset = Vector3.new(0, 2, 0)},
     weaponEnhancements = {Reach = 10000, AttackDelay = -10000, Damage = 10000, BluntChance = 10000, SwingSpeed = 100000, CouchDelay = -100, EncloseSpeed = -1000, BlockedTime = -10000, BaseForce = 100, LockSpread = 0, MaxAmmo = 100, Ammo = 100, ReleaseSpeed = 10000},
     weaponSizes = {Sword = Vector3.new(7, 2, 2), Spear = Vector3.new(25, 1.5, 1.5), Javelin = Vector3.new(10, 1.5, 1.5), Longsword = Vector3.new(7, 2, 2), Polearm = Vector3.new(20, 1.5, 1.5), ["Sapper Axe"] = Vector3.new(15, 2.5, 2.5)},
     specialWeaponAttributes = {Longbow = {BaseDamage = 1000, Ammo = 10000, EncloseSpeed = -1000, MaxAmmo = 10000}, Crossbow = {Ammo = 10000, EncloseSpeed = -1000, MaxAmmo = 10000}},
