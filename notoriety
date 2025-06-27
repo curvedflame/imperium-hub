@@ -1,8 +1,10 @@
 --[[
-  Author: curved flame – credit required if reused. (i will fucking murder you if im not creditted)
-  Changes from original:
-    • Buttons now live in a scrollable ScrollingFrame so UI isn’t cramped.
+  ImperiumHub - Roblox Multi-Game Exploit
+  Author: curvedflame (https://github.com/curvedflame)
+  License: GPL-3.0
+  Redistribution without credit is strictly prohibited. DMCA enforced.
 ]]
+
 
 local AdminPanel = Instance.new("ScreenGui")
 AdminPanel.Name = "ImperiumHub"
