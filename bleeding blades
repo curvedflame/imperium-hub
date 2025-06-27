@@ -1,3 +1,10 @@
+--[[
+  ImperiumHub - Roblox Multi-Game Exploit
+  Author: curvedflame (https://github.com/curvedflame)
+  License: GPL-3.0
+  Redistribution without credit is strictly prohibited. DMCA enforced.
+]]
+
 local Services = setmetatable({}, {__index = function(_, key) return game:GetService(key) end})
 local Players, ReplicatedStorage, RunService, UserInputService, TweenService = Services.Players, Services.ReplicatedStorage, Services.RunService, Services.UserInputService, Services.TweenService
 local LocalPlayer, Combat, Voice = Players.LocalPlayer, ReplicatedStorage:WaitForChild("Combat"), ReplicatedStorage:WaitForChild("Environment"):WaitForChild("Voice")
