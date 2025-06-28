@@ -6,17 +6,15 @@
 ]]
 
 
-
-
-
+-- 100% not chatgpt
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 
-local AdminPanel = Instance.new("ScreenGui")
-AdminPanel.Name = "ImperiumHub"
-AdminPanel.ResetOnSpawn = false
-AdminPanel.Parent = player:WaitForChild("PlayerGui")
+local ImperiumHub = Instance.new("ScreenGui")
+ImperiumHub.Name = "ImperiumHub"
+ImperiumHub.ResetOnSpawn = false
+ImperiumHub.Parent = player:WaitForChild("PlayerGui")
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
@@ -26,7 +24,7 @@ MainFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
-MainFrame.Parent = AdminPanel
+MainFrame.Parent = ImperiumHub
 
 local Title = Instance.new("TextLabel")
 Title.Name = "Title"
@@ -99,17 +97,17 @@ CloseButton.TextSize = 18
 CloseButton.Font = Enum.Font.SourceSansBold
 CloseButton.Parent = MainFrame
 CloseButton.MouseButton1Click:Connect(function()
-    AdminPanel.Enabled = false
+    ImperiumHub.Enabled = false
 end)
 
--- Copy Discord Invite button
-local inviteLink = "https://discord.gg/DcTmm573m6" -- put your real invite here
+-- Copy Discord Invite
+local inviteLink = "https://discord.gg/DcTmm573m6"
 CreateButton("Copy Discord Invite", function()
     setclipboard(inviteLink)
     notify("Invite link copied to clipboard!")
 end, Color3.fromRGB(0, 110, 255))
 
--- Kill Aura logic and button
+-- Kill Aura
 local killAuraEnabled = false
 local killAuraConnection
 
@@ -123,19 +121,17 @@ end
 local function getClosestEnemyPlayer(preferNoForcefield)
     local character = getCharacter()
     if not character or not character:FindFirstChild("HumanoidRootPart") then return nil end
-    
+
     local hrp = character.HumanoidRootPart
     local closest = nil
     local closestDistance = math.huge
-    
-    -- First try to find players without forcefields if preferred
+
     if preferNoForcefield then
         for _, otherPlayer in pairs(Players:GetPlayers()) do
             if otherPlayer ~= player and otherPlayer.Team ~= player.Team then
                 local otherCharacter = otherPlayer.Character
                 if otherCharacter and otherCharacter:FindFirstChild("HumanoidRootPart") and otherCharacter:FindFirstChild("Humanoid") then
                     if otherCharacter.Humanoid.Health > 0 then
-                        -- Check if player has no forcefield
                         local hasFF = otherCharacter:FindFirstChildOfClass("ForceField") ~= nil
                         if not hasFF then
                             local distance = (otherCharacter.HumanoidRootPart.Position - hrp.Position).Magnitude
@@ -149,8 +145,7 @@ local function getClosestEnemyPlayer(preferNoForcefield)
             end
         end
     end
-    
-    -- If no player found without forcefield or not preferring that, fall back to any player
+
     if not closest then
         closestDistance = math.huge
         for _, otherPlayer in pairs(Players:GetPlayers()) do
@@ -168,54 +163,20 @@ local function getClosestEnemyPlayer(preferNoForcefield)
             end
         end
     end
-    
-    return closest
-end
 
--- Get all enemy players for killall function
-local function getAllEnemyPlayers(preferNoForcefield)
-    local enemies = {}
-    local enemiesWithFF = {}
-    
-    for _, otherPlayer in pairs(Players:GetPlayers()) do
-        if otherPlayer ~= player and otherPlayer.Team ~= player.Team then
-            local otherCharacter = otherPlayer.Character
-            if otherCharacter and otherCharacter:FindFirstChild("HumanoidRootPart") and otherCharacter:FindFirstChild("Humanoid") then
-                if otherCharacter.Humanoid.Health > 0 then
-                    local hasFF = otherCharacter:FindFirstChildOfClass("ForceField") ~= nil
-                    if hasFF then
-                        table.insert(enemiesWithFF, otherPlayer)
-                    else
-                        table.insert(enemies, otherPlayer)
-                    end
-                end
-            end
-        end
-    end
-    
-    -- If preferring no forcefield but all enemies have forcefields, return enemies with forcefields
-    if preferNoForcefield and #enemies == 0 then
-        return enemiesWithFF
-    end
-    
-    return enemies
+    return closest
 end
 
 local function startKillAura()
     if killAuraEnabled then return end
     killAuraEnabled = true
     notify("Kill Aura activated")
-    
     killAuraConnection = RunService.Heartbeat:Connect(function()
         if killAuraEnabled then
-            local target = getClosestEnemyPlayer(true)  -- Prefer no forcefield
+            local target = getClosestEnemyPlayer(true)
             if target then
-                -- Fire the melee event to damage the targeted player
-                local args = {
-                    [1] = target
-                }
-                game:GetService("ReplicatedStorage"):WaitForChild("meleeEvent", 2):FireServer(unpack(args))
-                task.wait(0.1) -- Small delay to prevent overwhelming the server
+                game:GetService("ReplicatedStorage"):WaitForChild("meleeEvent", 2):FireServer(target)
+                task.wait(0.1)
             end
         end
     end)
@@ -224,82 +185,62 @@ end
 local function stopKillAura()
     if not killAuraEnabled then return end
     killAuraEnabled = false
-    if killAuraConnection then
-        killAuraConnection:Disconnect()
-        killAuraConnection = nil
-    end
+    if killAuraConnection then killAuraConnection:Disconnect() killAuraConnection = nil end
     notify("Kill Aura deactivated")
 end
 
--- Kill Aura toggle button
 CreateButton("Toggle Kill Aura", function()
-    if killAuraEnabled then
-        stopKillAura()
-    else
-        startKillAura()
-    end
+    if killAuraEnabled then stopKillAura() else startKillAura() end
 end, Color3.fromRGB(255, 50, 50))
 
--- Teleport to nearest enemy button
+-- Teleport to Enemy
 CreateButton("Teleport to Enemy", function()
     local character = getCharacter()
-    if not character or not character:FindFirstChild("HumanoidRootPart") then 
-        notify("Character not found")
-        return 
-    end
-    
-    local target = getClosestEnemyPlayer(true)  -- Prefer no forcefield
+    local target = getClosestEnemyPlayer(true)
     if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-        character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+        character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(0,0,3)
         notify("Teleported to " .. target.Name)
     else
         notify("No enemy player found")
     end
 end, Color3.fromRGB(200, 70, 255))
 
--- Kill All button
+-- Kill All
 local killAllRunning = false
 local killAllConnection
+
+local function getAllEnemyPlayers(preferNoForcefield)
+    local enemies, enemiesWithFF = {}, {}
+    for _, otherPlayer in pairs(Players:GetPlayers()) do
+        if otherPlayer ~= player and otherPlayer.Team ~= player.Team then
+            local oc = otherPlayer.Character
+            if oc and oc:FindFirstChild("HumanoidRootPart") and oc:FindFirstChild("Humanoid") and oc.Humanoid.Health > 0 then
+                local hasFF = oc:FindFirstChildOfClass("ForceField") ~= nil
+                if hasFF then table.insert(enemiesWithFF, otherPlayer)
+                else table.insert(enemies, otherPlayer) end
+            end
+        end
+    end
+    if preferNoForcefield and #enemies == 0 then return enemiesWithFF end
+    return enemies
+end
 
 local function startKillAll()
     if killAllRunning then return end
     killAllRunning = true
     notify("Kill All activated")
-    
-    -- First activate kill aura if not already on
-    if not killAuraEnabled then
-        startKillAura()
-    end
-    
+    if not killAuraEnabled then startKillAura() end
     killAllConnection = RunService.Heartbeat:Connect(function()
         if killAllRunning then
             local character = getCharacter()
-            if not character or not character:FindFirstChild("HumanoidRootPart") then return end
-            
-            -- Get all enemies, preferring those without forcefields
-            local enemies = getAllEnemyPlayers(true)
-            if #enemies > 0 then
-                for _, enemy in ipairs(enemies) do
-                    if enemy.Character and enemy.Character:FindFirstChild("HumanoidRootPart") then
-                        -- Teleport to enemy
-                        character.HumanoidRootPart.CFrame = enemy.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
-                        
-                        -- Fire kill event
-                        local args = {
-                            [1] = enemy
-                        }
-                        game:GetService("ReplicatedStorage"):WaitForChild("meleeEvent", 2):FireServer(unpack(args))
-                        
-                        -- Small delay between teleports
-                        task.wait(0.3)
-                    end
+            for _, enemy in ipairs(getAllEnemyPlayers(true)) do
+                if enemy.Character and enemy.Character:FindFirstChild("HumanoidRootPart") then
+                    character.HumanoidRootPart.CFrame = enemy.Character.HumanoidRootPart.CFrame * CFrame.new(0,0,3)
+                    game:GetService("ReplicatedStorage"):WaitForChild("meleeEvent", 2):FireServer(enemy)
+                    task.wait(0.3)
                 end
-                
-                -- After going through all enemies, wait a bit before the next cycle
-                task.wait(1)
-            else
-                task.wait(0.5)
             end
+            task.wait(1)
         end
     end)
 end
@@ -307,22 +248,15 @@ end
 local function stopKillAll()
     if not killAllRunning then return end
     killAllRunning = false
-    if killAllConnection then
-        killAllConnection:Disconnect()
-        killAllConnection = nil
-    end
+    if killAllConnection then killAllConnection:Disconnect() killAllConnection = nil end
     notify("Kill All deactivated")
 end
 
 CreateButton("Toggle Kill All", function()
-    if killAllRunning then
-        stopKillAll()
-    else
-        startKillAll()
-    end
+    if killAllRunning then stopKillAll() else startKillAll() end
 end, Color3.fromRGB(255, 0, 0))
 
--- Self Promotion System
+-- Self Promotion
 local promoEnabled = false
 local promoConnection
 local promoMessage = "ImperiumHub on top!"
@@ -331,24 +265,18 @@ local function startPromotion()
     if promoEnabled then return end
     promoEnabled = true
     notify("Self Promotion started")
-    
     promoConnection = RunService.Heartbeat:Connect(function()
         if promoEnabled then
-            -- Attempt to send chat message
-            if game:GetService("TextChatService") and game:GetService("TextChatService"):FindFirstChild("TextChannels") and 
-               game:GetService("TextChatService").TextChannels:FindFirstChild("RBXGeneral") then
-                -- New text chat system
-                game:GetService("TextChatService").TextChannels.RBXGeneral:SendAsync(promoMessage)
+            local chatService = game:GetService("TextChatService")
+            if chatService and chatService.TextChannels:FindFirstChild("RBXGeneral") then
+                chatService.TextChannels.RBXGeneral:SendAsync(promoMessage)
             else
-                -- Legacy chat system
-                game:GetService("ReplicatedStorage"):WaitForChild("DefaultChatSystemChatEvents", 1)
-                if game:GetService("ReplicatedStorage"):FindFirstChild("DefaultChatSystemChatEvents") and
-                   game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents:FindFirstChild("SayMessageRequest") then
-                    game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(promoMessage, "All")
+                local chatEvents = game:GetService("ReplicatedStorage"):WaitForChild("DefaultChatSystemChatEvents",1)
+                if chatEvents and chatEvents:FindFirstChild("SayMessageRequest") then
+                    chatEvents.SayMessageRequest:FireServer(promoMessage, "All")
                 end
             end
-            
-            task.wait(3) -- Wait 3 seconds between messages
+            task.wait(3)
         end
     end)
 end
@@ -356,136 +284,66 @@ end
 local function stopPromotion()
     if not promoEnabled then return end
     promoEnabled = false
-    if promoConnection then
-        promoConnection:Disconnect()
-        promoConnection = nil
-    end
+    if promoConnection then promoConnection:Disconnect() promoConnection = nil end
     notify("Self Promotion stopped")
 end
 
 CreateButton("Toggle Self Promo", function()
-    if promoEnabled then
-        stopPromotion()
-    else
-        startPromotion()
-    end
+    if promoEnabled then stopPromotion() else startPromotion() end
 end, Color3.fromRGB(252, 186, 3))
 
--- ESP (player highlighting) feature
+-- ESP
 local espEnabled = false
 local espFolder
 local espConnections = {}
 
 local function clearESP()
-    if espFolder then
-        espFolder:Destroy()
-        espFolder = nil
-    end
-    
-    for _, connection in pairs(espConnections) do
-        connection:Disconnect()
-    end
+    if espFolder then espFolder:Destroy() espFolder = nil end
+    for _, c in ipairs(espConnections) do c:Disconnect() end
     espConnections = {}
 end
 
 local function createESP()
     clearESP()
-    
     espFolder = Instance.new("Folder")
     espFolder.Name = "ESP_Highlights"
     espFolder.Parent = workspace
-    
-    for _, otherPlayer in pairs(Players:GetPlayers()) do
-        if otherPlayer ~= player then
-            local highlight = Instance.new("Highlight")
-            highlight.Name = otherPlayer.Name .. "_Highlight"
-            
-            -- Different colors for teammates vs enemies
-            if otherPlayer.Team == player.Team then
-                highlight.FillColor = Color3.fromRGB(0, 255, 0)  -- Green for teammates
-                highlight.OutlineColor = Color3.fromRGB(0, 200, 0)
-            else
-                highlight.FillColor = Color3.fromRGB(255, 0, 0)  -- Red for enemies
-                highlight.OutlineColor = Color3.fromRGB(200, 0, 0)
-            end
-            
-            highlight.FillTransparency = 0.5
-            highlight.OutlineTransparency = 0
-            highlight.Parent = espFolder
-            
-            local function updateHighlight()
-                if otherPlayer.Character then
-                    highlight.Adornee = otherPlayer.Character
-                else
-                    highlight.Adornee = nil
-                end
-            end
-            
-            updateHighlight()
-            
-            -- Update when character changes
-            local connection = otherPlayer.CharacterAdded:Connect(updateHighlight)
-            table.insert(espConnections, connection)
-        end
-    end
-    
-    -- Handle new players joining
-    local connection = Players.PlayerAdded:Connect(function(newPlayer)
+    local function addHighlight(otherPlayer)
         local highlight = Instance.new("Highlight")
-        highlight.Name = newPlayer.Name .. "_Highlight"
-        
-        if newPlayer.Team == player.Team then
-            highlight.FillColor = Color3.fromRGB(0, 255, 0)
-            highlight.OutlineColor = Color3.fromRGB(0, 200, 0)
+        highlight.Name = otherPlayer.Name .. "_Highlight"
+        if otherPlayer.Team == player.Team then
+            highlight.FillColor = Color3.fromRGB(0,255,0)
+            highlight.OutlineColor = Color3.fromRGB(0,200,0)
         else
-            highlight.FillColor = Color3.fromRGB(255, 0, 0)
-            highlight.OutlineColor = Color3.fromRGB(200, 0, 0)
+            highlight.FillColor = Color3.fromRGB(255,0,0)
+            highlight.OutlineColor = Color3.fromRGB(200,0,0)
         end
-        
         highlight.FillTransparency = 0.5
         highlight.OutlineTransparency = 0
         highlight.Parent = espFolder
-        
-        local function updateHighlight()
-            if newPlayer.Character then
-                highlight.Adornee = newPlayer.Character
-            else
-                highlight.Adornee = nil
-            end
+        local function update()
+            highlight.Adornee = otherPlayer.Character or nil
         end
-        
-        updateHighlight()
-        
-        local charConnection = newPlayer.CharacterAdded:Connect(updateHighlight)
-        table.insert(espConnections, charConnection)
-    end)
-    table.insert(espConnections, connection)
+        update()
+        table.insert(espConnections, otherPlayer.CharacterAdded:Connect(update))
+    end
+    for _, otherPlayer in pairs(Players:GetPlayers()) do
+        if otherPlayer ~= player then addHighlight(otherPlayer) end
+    end
+    table.insert(espConnections, Players.PlayerAdded:Connect(addHighlight))
 end
 
 CreateButton("Toggle ESP", function()
     espEnabled = not espEnabled
-    
-    if espEnabled then
-        createESP()
-        notify("ESP activated")
-    else
-        clearESP()
-        notify("ESP deactivated")
-    end
+    if espEnabled then createESP() notify("ESP activated") else clearESP() notify("ESP deactivated") end
 end, Color3.fromRGB(70, 130, 255))
 
--- Clean up when script is terminated
-AdminPanel.AncestryChanged:Connect(function()
-    if not AdminPanel:IsDescendantOf(game) then
-        if killAuraConnection then
-            killAuraConnection:Disconnect()
-        end
-        if killAllConnection then
-            killAllConnection:Disconnect()
-        end
-        if promoConnection then
-            promoConnection:Disconnect()
-        end
+-- Cleanup
+ImperiumHub.AncestryChanged:Connect(function()
+    if not ImperiumHub:IsDescendantOf(game) then
+        stopKillAura()
+        stopKillAll()
+        stopPromotion()
         clearESP()
     end
 end)
